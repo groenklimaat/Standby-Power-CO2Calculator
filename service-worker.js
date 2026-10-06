@@ -3,9 +3,12 @@ const CACHE_NAME = 'standby-co2-v1.0.0';
 const APP_SHELL = [
   './',
   './index.html',
+  './offline.html',
   './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
+  './icon_72x72.png',
+  './icon_96x96.png',
+  './icon_192x192.png',
+  './icon_300x300.png'
 ];
 
 self.addEventListener('install', (event) => {
