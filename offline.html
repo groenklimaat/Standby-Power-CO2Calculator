@@ -31,9 +31,9 @@
         font-weight: bold;
         margin-bottom: 10px;
     }
-    h1 { color: #2c5282; text-align: center; margin-top: 0; }
-    h2 { color: #4a7fb0; border-bottom: 2px solid #e6f2ff; padding-bottom: 5px; }
-    h3 { color: #4a7fb0; }
+    h1 { color: #22543d; text-align: center; margin-top: 0; }
+    h2 { color: #38a169; border-bottom: 2px solid #e6f2ff; padding-bottom: 5px; }
+    h3 { color: #38a169; }
     .lang-switch { display: flex; justify-content: flex-end; margin-bottom: 15px; }
     .lang-switch select {
         width: auto; padding: 8px 12px; font-size: 15px;
@@ -47,21 +47,21 @@
         border: 2px solid #cbd5e0; border-radius: 8px;
         font-size: 16px; transition: border-color 0.3s;
     }
-    input:focus, select:focus { outline: none; border-color: #4299e1; }
+    input:focus, select:focus { outline: none; border-color: #38a169; }
     button {
-        background-color: #4299e1; color: white;
+        background-color: #38a169; color: white;
         padding: 14px 20px; border: none; border-radius: 8px;
         cursor: pointer; font-size: 18px; font-weight: bold;
         width: 100%; transition: background-color 0.3s;
     }
-    button:hover { background-color: #3182ce; }
+    button:hover { background-color: #22543d; }
     .result-box {
-        background-color: #ebf8ff; border-left: 5px solid #4299e1;
+        background-color: #f0fff4; border-left: 5px solid #38a169;
         padding: 20px; margin-top: 25px; border-radius: 8px;
         display: none;
     }
     .result-item { margin-bottom: 10px; font-size: 18px; }
-    .highlight { font-size: 24px; font-weight: bold; color: #2c5282; }
+    .highlight { font-size: 24px; font-weight: bold; color: #22543d; }
     .highlight-co2 { color: #38a169; }
     .co2-box {
         background-color: #f0fff4; border-left: 5px solid #38a169;
@@ -76,7 +76,7 @@
         margin-bottom: 10px; font-size: 16px; flex-wrap: wrap;
     }
     .comparison-icon { font-size: 24px; }
-    .comparison-value { font-weight: bold; color: #2c5282; }
+    .comparison-value { font-weight: bold; color: #22543d; }
     .info-box {
         background-color: #fff8e1; border-left: 5px solid #f6ad55;
         padding: 15px; margin: 20px 0; border-radius: 8px; font-size: 15px;
@@ -86,14 +86,14 @@
         gap: 12px; margin-top: 15px;
     }
     .device-btn {
-        background: #e6f7ff; border: 2px solid #bae7ff;
+        background: #f0fff4; border: 2px solid #9ae6b4;
         border-radius: 8px; padding: 12px 8px; cursor: pointer;
         text-align: center; font-size: 14px; transition: all 0.2s;
         line-height: 1.3;
     }
-    .device-btn:hover { background: #bae7ff; border-color: #4299e1; }
+    .device-btn:hover { background: #c6f6d5; border-color: #38a169; }
     .device-btn .device-watt {
-        display: block; color: #4a7fb0; font-size: 12px; margin-top: 4px;
+        display: block; color: #38a169; font-size: 12px; margin-top: 4px;
     }
     .consumption-list { margin-top: 25px; }
     .list-item {
@@ -102,7 +102,7 @@
         flex-wrap: wrap; gap: 5px;
     }
     .list-period { font-weight: 600; }
-    .list-cost { color: #2c5282; font-weight: 600; }
+    .list-cost { color: #22543d; font-weight: 600; }
     .list-co2 { color: #38a169; font-weight: 600; }
     .error-message {
         color: #e53e3e; font-size: 14px; margin-top: 5px; display: none;
@@ -148,33 +148,15 @@
 
         <h2 id="section1">1. Choose an example or enter your own</h2>
         <div class="device-grid">
-            <div class="device-btn" id="exNas" onclick="fillExample('nas')">
-                🗄️ NAS<span class="device-watt">15 W</span>
-            </div>
-            <div class="device-btn" id="exServer" onclick="fillExample('server')">
-                🖥️ Server<span class="device-watt">25 W</span>
-            </div>
-            <div class="device-btn" id="exDesktop" onclick="fillExample('desktop')">
-                💻 Desktop PC<span class="device-watt">5 W</span>
-            </div>
-            <div class="device-btn" id="exRouter" onclick="fillExample('router')">
-                📡 Router<span class="device-watt">8 W</span>
-            </div>
-            <div class="device-btn" id="exModem" onclick="fillExample('modem')">
-                📶 Modem<span class="device-watt">6 W</span>
-            </div>
-            <div class="device-btn" id="exTv" onclick="fillExample('tv')">
-                📺 TV + Soundbar<span class="device-watt">25 W</span>
-            </div>
-            <div class="device-btn" id="exConsole" onclick="fillExample('console')">
-                🎮 Game Console<span class="device-watt">10 W</span>
-            </div>
-            <div class="device-btn" id="exPc" onclick="fillExample('pc')">
-                🖱️ Computer Setup<span class="device-watt">15 W</span>
-            </div>
-            <div class="device-btn" id="exQuooker" onclick="fillExample('quooker')">
-                🚰 Quooker<span class="device-watt">10 W</span>
-            </div>
+            <div class="device-btn" id="exNas" onclick="fillExample('nas')">🗄️ NAS<span class="device-watt">15 W</span></div>
+            <div class="device-btn" id="exServer" onclick="fillExample('server')">🖥️ Server<span class="device-watt">25 W</span></div>
+            <div class="device-btn" id="exDesktop" onclick="fillExample('desktop')">💻 Desktop<span class="device-watt">5 W</span></div>
+            <div class="device-btn" id="exRouter" onclick="fillExample('router')">📡 Router<span class="device-watt">8 W</span></div>
+            <div class="device-btn" id="exModem" onclick="fillExample('modem')">📶 Modem<span class="device-watt">6 W</span></div>
+            <div class="device-btn" id="exTv" onclick="fillExample('tv')">📺 TV + Soundbar<span class="device-watt">25 W</span></div>
+            <div class="device-btn" id="exConsole" onclick="fillExample('console')">🎮 Console<span class="device-watt">10 W</span></div>
+            <div class="device-btn" id="exPc" onclick="fillExample('pc')">🖱️ PC Setup<span class="device-watt">15 W</span></div>
+            <div class="device-btn" id="exQuooker" onclick="fillExample('quooker')">🚰 Quooker<span class="device-watt">10 W</span></div>
         </div>
 
         <h2 id="section2">2. Your data</h2>
@@ -275,6 +257,7 @@
         const translations = {
             en: {
                 offlineLabel: "Works offline",
+                footerText: "📴 Offline version — works without internet",
                 title: "🔄 Standby Power & CO₂ Calculator",
                 subtitle: "Calculate what your devices cost annually in standby mode, including CO₂ emissions.",
                 infoTitle: "💡 What is standby consumption?",
@@ -323,7 +306,6 @@
                 yearLabel: "After {n} year(s):",
                 carUnit: "km",
                 treeUnit: "tree(s)",
-                footerText: "📴 Offline version — works without internet",
                 examples: {
                     nas: "NAS (always on)",
                     server: "Home server",
@@ -338,6 +320,7 @@
             },
             nl: {
                 offlineLabel: "Werkt offline",
+                footerText: "📴 Offline versie — werkt zonder internet",
                 title: "🔄 Sluipstroom & CO₂ Calculator",
                 subtitle: "Bereken wat je apparaten in standby kosten, inclusief CO₂-uitstoot.",
                 infoTitle: "💡 Wat is sluipverbruik?",
@@ -386,7 +369,6 @@
                 yearLabel: "Na {n} jaar:",
                 carUnit: "km",
                 treeUnit: "boom(en)",
-                footerText: "📴 Offline versie — werkt zonder internet",
                 examples: {
                     nas: "NAS (altijd aan)",
                     server: "Thuis server",
@@ -401,6 +383,7 @@
             },
             fr: {
                 offlineLabel: "Fonctionne hors ligne",
+                footerText: "📴 Version hors ligne — fonctionne sans internet",
                 title: "🔄 Calculateur de veille & CO₂",
                 subtitle: "Calculez ce que vos appareils coûtent annuellement en veille, y compris les émissions de CO₂.",
                 infoTitle: "💡 Qu'est-ce que la consommation en veille ?",
@@ -449,7 +432,6 @@
                 yearLabel: "Après {n} an(s) :",
                 carUnit: "km",
                 treeUnit: "arbre(s)",
-                footerText: "📴 Version hors ligne — fonctionne sans internet",
                 examples: {
                     nas: "NAS (toujours allumé)",
                     server: "Serveur domestique",
@@ -464,6 +446,7 @@
             },
             de: {
                 offlineLabel: "Funktioniert offline",
+                footerText: "📴 Offline-Version — funktioniert ohne Internet",
                 title: "🔄 Standby-Verbrauch & CO₂-Rechner",
                 subtitle: "Berechnen Sie, was Ihre Geräte im Standby jährlich kosten, inklusive CO₂-Emissionen.",
                 infoTitle: "💡 Was ist Standby-Verbrauch?",
@@ -512,7 +495,6 @@
                 yearLabel: "Nach {n} Jahr(en):",
                 carUnit: "km",
                 treeUnit: "Baum/Bäume",
-                footerText: "📴 Offline-Version — funktioniert ohne Internet",
                 examples: {
                     nas: "NAS (immer an)",
                     server: "Heimserver",
@@ -527,6 +509,7 @@
             },
             es: {
                 offlineLabel: "Funciona sin conexión",
+                footerText: "📴 Versión sin conexión — funciona sin internet",
                 title: "🔄 Calculadora de consumo en espera & CO₂",
                 subtitle: "Calcula lo que tus dispositivos cuestan anualmente en modo de espera, incluidas las emisiones de CO₂.",
                 infoTitle: "💡 ¿Qué es el consumo en espera?",
@@ -575,7 +558,6 @@
                 yearLabel: "Después de {n} año(s):",
                 carUnit: "km",
                 treeUnit: "árbol(es)",
-                footerText: "📴 Versión sin conexión — funciona sin internet",
                 examples: {
                     nas: "NAS (siempre encendido)",
                     server: "Servidor doméstico",
@@ -590,6 +572,7 @@
             },
             it: {
                 offlineLabel: "Funziona offline",
+                footerText: "📴 Versione offline — funziona senza internet",
                 title: "🔄 Calcolatore standby & CO₂",
                 subtitle: "Calcola quanto costano annualmente i tuoi dispositivi in standby, incluse le emissioni di CO₂.",
                 infoTitle: "💡 Cos'è il consumo in standby?",
@@ -638,7 +621,6 @@
                 yearLabel: "Dopo {n} anno/i:",
                 carUnit: "km",
                 treeUnit: "albero/i",
-                footerText: "📴 Versione offline — funziona senza internet",
                 examples: {
                     nas: "NAS (sempre acceso)",
                     server: "Server domestico",
@@ -653,6 +635,7 @@
             },
             pt: {
                 offlineLabel: "Funciona offline",
+                footerText: "📴 Versão offline — funciona sem internet",
                 title: "🔄 Calculadora standby & CO₂",
                 subtitle: "Calcule quanto os seus dispositivos custam anualmente em standby, incluindo as emissões de CO₂.",
                 infoTitle: "💡 O que é o consumo em standby?",
@@ -701,7 +684,6 @@
                 yearLabel: "Após {n} ano(s):",
                 carUnit: "km",
                 treeUnit: "árvore(s)",
-                footerText: "📴 Versão offline — funciona sem internet",
                 examples: {
                     nas: "NAS (sempre ligado)",
                     server: "Servidor doméstico",
@@ -716,6 +698,7 @@
             },
             la: {
                 offlineLabel: "Sine interrete laborat",
+                footerText: "📴 Versio offline — sine interrete laborat",
                 title: "🔄 Computator Standby & CO₂",
                 subtitle: "Computa quantum apparatus tua in standby constant, inclusis emissionibus CO₂.",
                 infoTitle: "💡 Quid est consumptio standby?",
@@ -764,7 +747,6 @@
                 yearLabel: "Post {n} annum/annos:",
                 carUnit: "km",
                 treeUnit: "arbor(es)",
-                footerText: "📴 Versio offline — sine interrete laborat",
                 examples: {
                     nas: "NAS (semper accensus)",
                     server: "Servus domesticus",
@@ -779,9 +761,6 @@
             }
         };
 
-        // =================================================================
-        // EXAMPLE VALUES
-        // =================================================================
         const exampleValues = {
             nas:      { power: 15, rate: 0.35 },
             server:   { power: 25, rate: 0.35 },
@@ -801,24 +780,17 @@
 
         let currentLang = 'en';
 
-        // =================================================================
-        // LANGUAGE SWITCH
-        // =================================================================
         function switchLang(lang) {
             currentLang = lang;
             const t = translations[lang];
             document.documentElement.lang = lang;
 
-            const set = (id, val) => {
-                const el = document.getElementById(id);
-                if (el) el.textContent = val;
-            };
-            const setHTML = (id, val) => {
-                const el = document.getElementById(id);
-                if (el) el.innerHTML = val;
-            };
+            const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+            const setHTML = (id, val) => { const el = document.getElementById(id); if (el) el.innerHTML = val; };
+            const setPlaceholder = (id, val) => { const el = document.getElementById(id); if (el) el.placeholder = val; };
 
             set('offlineLabel', t.offlineLabel);
+            set('footerText', t.footerText);
             set('title', t.title);
             set('subtitle', t.subtitle);
             set('infoTitle', t.infoTitle);
@@ -860,9 +832,9 @@
             set('co2InfoText', t.co2InfoText);
             set('powerError', t.errorPower);
             set('rateError', t.errorRate);
-            document.getElementById('deviceName').placeholder = t.placeholderName;
-            document.getElementById('power').placeholder = t.placeholderPower;
-            document.getElementById('rate').placeholder = t.placeholderRate;
+            setPlaceholder('deviceName', t.placeholderName);
+            setPlaceholder('power', t.placeholderPower);
+            setPlaceholder('rate', t.placeholderRate);
 
             document.getElementById('exNas').innerHTML = '🗄️ ' + t.examples.nas + '<span class="device-watt">15 W</span>';
             document.getElementById('exServer').innerHTML = '🖥️ ' + t.examples.server + '<span class="device-watt">25 W</span>';
@@ -874,14 +846,10 @@
             document.getElementById('exPc').innerHTML = '🖱️ ' + t.examples.pc + '<span class="device-watt">15 W</span>';
             document.getElementById('exQuooker').innerHTML = '🚰 ' + t.examples.quooker + '<span class="device-watt">10 W</span>';
 
-            set('footerText', t.footerText);
             document.title = t.title.replace(/🔄\s*/, '') + ' (Offline)';
             calculateStandbyCost();
         }
 
-        // =================================================================
-        // FILL EXAMPLE
-        // =================================================================
         function fillExample(type) {
             const t = translations[currentLang];
             const ex = exampleValues[type];
@@ -894,9 +862,6 @@
             calculateStandbyCost();
         }
 
-        // =================================================================
-        // MAIN CALCULATION
-        // =================================================================
         function calculateStandbyCost() {
             const t = translations[currentLang];
             const deviceName = document.getElementById('deviceName').value.trim() || t.defaultValueName;
@@ -942,20 +907,15 @@
 
             const yearlyCO2Grams = yearlyCO2Kg * 1000;
             const kmDriven = Math.round(yearlyCO2Grams / CO2_CONSTANTS.CAR_GRAMS_PER_KM);
-            document.getElementById('comparisonCar').textContent =
-                kmDriven.toLocaleString() + ' ' + t.carUnit;
+            document.getElementById('comparisonCar').textContent = kmDriven.toLocaleString() + ' ' + t.carUnit;
 
             const trees = yearlyCO2Kg / CO2_CONSTANTS.TREE_KG_PER_YEAR;
-            document.getElementById('comparisonTrees').textContent =
-                trees.toFixed(1) + ' ' + t.treeUnit;
+            document.getElementById('comparisonTrees').textContent = trees.toFixed(1) + ' ' + t.treeUnit;
 
             document.getElementById('resultBox').style.display = 'block';
             showYearlyBreakdown(yearlyCost, yearlyCO2Kg);
         }
 
-        // =================================================================
-        // YEARLY BREAKDOWN
-        // =================================================================
         function showYearlyBreakdown(yearlyCost, yearlyCO2Kg) {
             const t = translations[currentLang];
             const listContainer = document.getElementById('yearlyList');
@@ -976,9 +936,6 @@
             }
         }
 
-        // =================================================================
-        // INIT
-        // =================================================================
         window.onload = function () {
             document.getElementById('langSelect').value = 'en';
             switchLang('en');
