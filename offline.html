@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Standby Power &amp; CO₂ Calculator (Offline)</title>
+<style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
+    body {
+        background-color: #f0f7ff;
+        color: #333;
+        line-height: 1.6;
+        padding: 20px;
+        margin: 0;
+    }
+    .container {
+        max-width: 900px;
+        margin: 20px auto;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0, 100, 200, 0.1);
+        padding: 30px;
+    }
+    .offline-badge {
+        display: inline-block;
+        background: #c6f6d5;
+        color: #22543d;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    h1 { color: #2c5282; text-align: center; margin-top: 0; }
+    h2 { color: #4a7fb0; border-bottom: 2px solid #e6f2ff; padding-bottom: 5px; }
+    h3 { color: #4a7fb0; }
+    .lang-switch { display: flex; justify-content: flex-end; margin-bottom: 15px; }
+    .lang-switch select {
+        width: auto; padding: 8px 12px; font-size: 15px;
+        border-radius: 8px; border: 2px solid #cbd5e0;
+        background: white; cursor: pointer;
+    }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
+    input, select {
+        width: 100%; padding: 12px 15px;
+        border: 2px solid #cbd5e0; border-radius: 8px;
+        font-size: 16px; transition: border-color 0.3s;
+    }
+    input:focus, select:focus { outline: none; border-color: #4299e1; }
+    button {
+        background-color: #4299e1; color: white;
+        padding: 14px 20px; border: none; border-radius: 8px;
+        cursor: pointer; font-size: 18px; font-weight: bold;
+        width: 100%; transition: background-color 0.3s;
+    }
+    button:hover { background-color: #3182ce; }
+    .result-box {
+        background-color: #ebf8ff; border-left: 5px solid #4299e1;
+        padding: 20px; margin-top: 25px; border-radius: 8px;
+        display: none;
+    }
+    .result-item { margin-bottom: 10px; font-size: 18px; }
+    .highlight { font-size: 24px; font-weight: bold; color: #2c5282; }
+    .highlight-co2 { color: #38a169; }
+    .co2-box {
+        background-color: #f0fff4; border-left: 5px solid #38a169;
+        padding: 15px; margin-top: 15px; border-radius: 8px; font-size: 16px;
+    }
+    .comparison-box {
+        background-color: #fffaf0; border-left: 5px solid #f6ad55;
+        padding: 15px; margin-top: 15px; border-radius: 8px; font-size: 16px;
+    }
+    .comparison-item {
+        display: flex; align-items: center; gap: 10px;
+        margin-bottom: 10px; font-size: 16px; flex-wrap: wrap;
+    }
+    .comparison-icon { font-size: 24px; }
+    .comparison-value { font-weight: bold; color: #2c5282; }
+    .info-box {
+        background-color: #fff8e1; border-left: 5px solid #f6ad55;
+        padding: 15px; margin: 20px 0; border-radius: 8px; font-size: 15px;
+    }
+    .device-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+        gap: 12px; margin-top: 15px;
+    }
+    .device-btn {
+        background: #e6f7ff; border: 2px solid #bae7ff;
+        border-radius: 8px; padding: 12px 8px; cursor: pointer;
+        text-align: center; font-size: 14px; transition: all 0.2s;
+        line-height: 1.3;
+    }
+    .device-btn:hover { background: #bae7ff; border-color: #4299e1; }
+    .device-btn .device-watt {
+        display: block; color: #4a7fb0; font-size: 12px; margin-top: 4px;
+    }
+    .consumption-list { margin-top: 25px; }
+    .list-item {
+        display: flex; justify-content: space-between;
+        padding: 12px 0; border-bottom: 1px solid #eee;
+        flex-wrap: wrap; gap: 5px;
+    }
+    .list-period { font-weight: 600; }
+    .list-cost { color: #2c5282; font-weight: 600; }
+    .list-co2 { color: #38a169; font-weight: 600; }
+    .error-message {
+        color: #e53e3e; font-size: 14px; margin-top: 5px; display: none;
+    }
+    footer {
+        text-align: center; margin-top: 30px;
+        padding-top: 20px; border-top: 1px solid #e6f2ff;
+        font-size: 13px; color: #888;
+    }
+    @media (max-width: 600px) {
+        .container { padding: 20px; }
+        h1 { font-size: 24px; }
+        .device-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+</style>
+</head>
+<body>
+    <div class="container">
+        <div class="lang-switch">
+            <select id="langSelect" onchange="switchLang(this.value)">
+                <option value="en">🇬🇧 English</option>
+                <option value="nl">🇧🇪 Nederlands</option>
+                <option value="fr">🇫🇷 Français</option>
+                <option value="de">🇩🇪 Deutsch</option>
+                <option value="es">🇪🇸 Español</option>
+                <option value="it">🇮🇹 Italiano</option>
+                <option value="pt">🇵🇹 Português</option>
+                <option value="la">🏛️ Latina</option>
+            </select>
+        </div>
+
+        <div style="text-align:center;">
+            <span class="offline-badge">📴 <span id="offlineLabel">Works offline</span></span>
+        </div>
+
+        <h1 id="title">🔄 Standby Power &amp; CO₂ Calculator</h1>
+        <p id="subtitle">Calculate what your devices cost annually in standby mode, including CO₂ emissions.</p>
+
+        <div class="info-box">
+            <strong id="infoTitle">💡 What is standby consumption?</strong>
+            <span id="infoText">This is the power consumption of devices that are off or in standby (such as a TV, NAS, server, router or charger), but still draw power.</span>
+        </div>
+
+        <h2 id="section1">1. Choose an example or enter your own</h2>
+        <div class="device-grid">
+            <div class="device-btn" id="exNas" onclick="fillExample('nas')">
+                🗄️ NAS<span class="device-watt">15 W</span>
+            </div>
+            <div class="device-btn" id="exServer" onclick="fillExample('server')">
+                🖥️ Server<span class="device-watt">25 W</span>
+            </div>
+            <div class="device-btn" id="exDesktop" onclick="fillExample('desktop')">
+                💻 Desktop PC<span class="device-watt">5 W</span>
+            </div>
+            <div class="device-btn" id="exRouter" onclick="fillExample('router')">
+                📡 Router<span class="device-watt">8 W</span>
+            </div>
+            <div class="device-btn" id="exModem" onclick="fillExample('modem')">
+                📶 Modem<span class="device-watt">6 W</span>
+            </div>
+            <div class="device-btn" id="exTv" onclick="fillExample('tv')">
+                📺 TV + Soundbar<span class="device-watt">25 W</span>
+            </div>
+            <div class="device-btn" id="exConsole" onclick="fillExample('console')">
+                🎮 Game Console<span class="device-watt">10 W</span>
+            </div>
+            <div class="device-btn" id="exPc" onclick="fillExample('pc')">
+                🖱️ Computer Setup<span class="device-watt">15 W</span>
+            </div>
+            <div class="device-btn" id="exQuooker" onclick="fillExample('quooker')">
+                🚰 Quooker<span class="device-watt">10 W</span>
+            </div>
+        </div>
+
+        <h2 id="section2">2. Your data</h2>
+        <div class="form-group">
+            <label for="deviceName" id="labelName">Device name:</label>
+            <input type="text" id="deviceName" placeholder="E.g. Home NAS" value="Example device">
+        </div>
+        <div class="form-group">
+            <label for="power" id="labelPower">Standby consumption (Watt):</label>
+            <input type="number" id="power" placeholder="E.g. 15" value="15" min="0" step="0.1">
+            <div id="powerError" class="error-message">Please enter a valid number (greater than 0).</div>
+        </div>
+        <div class="form-group">
+            <label for="rate" id="labelRate">Electricity price (€ per kWh):</label>
+            <input type="number" id="rate" placeholder="E.g. 0.35" value="0.35" min="0" step="0.01">
+            <div id="rateError" class="error-message">Please enter a valid number (greater than 0).</div>
+        </div>
+        <div class="form-group">
+            <label for="hours" id="labelHours">Number of hours per day in standby:</label>
+            <select id="hours">
+                <option value="24" id="hours24">24 hours (always connected)</option>
+                <option value="12" id="hours12">12 hours (e.g. off at night)</option>
+                <option value="8" id="hours8">8 hours (workday)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="energyMix" id="labelEnergyMix">Energy mix (for CO₂ calculation):</label>
+            <select id="energyMix">
+                <option value="250" id="mixEU">🇪🇺 EU average (250 g CO₂/kWh)</option>
+                <option value="100" id="mixGreen">🌱 Green energy (100 g CO₂/kWh)</option>
+                <option value="350" id="mixBelgium">🇧🇪 Belgium average (350 g CO₂/kWh)</option>
+                <option value="400" id="mixNetherlands">🇳🇱 Netherlands (400 g CO₂/kWh)</option>
+                <option value="50" id="mixFrance">🇫🇷 France (nuclear, 50 g CO₂/kWh)</option>
+                <option value="380" id="mixGermany">🇩🇪 Germany (380 g CO₂/kWh)</option>
+                <option value="150" id="mixSpain">🇪🇸 Spain (150 g CO₂/kWh)</option>
+                <option value="800" id="mixCoal">⚫ Coal power (800 g CO₂/kWh)</option>
+            </select>
+        </div>
+
+        <button onclick="calculateStandbyCost()" id="calcBtn">Calculate Annual Cost</button>
+
+        <div id="resultBox" class="result-box">
+            <h2><span id="resultTitlePrefix">3. Result for:</span> <span id="resultDeviceName"></span></h2>
+            <div class="result-item"><span id="resultDailyPrefix">The device consumes</span> <span id="resultDaily" class="highlight"></span> <span id="resultDailySuffix">per day.</span></div>
+            <div class="result-item"><span id="resultYearlyPrefix">This amounts to</span> <span id="resultYearly" class="highlight"></span> <span id="resultYearlySuffix">per year.</span></div>
+            <div class="result-item"><span id="resultCostPrefix">The annual cost is</span> <span id="resultCost" class="highlight"></span>.</div>
+
+            <div class="co2-box">
+                <div class="result-item">
+                    <span id="resultCO2YearlyPrefix">🌍 Annual CO₂ emissions:</span>
+                    <span id="resultCO2Yearly" class="highlight highlight-co2"></span>
+                </div>
+                <div class="result-item">
+                    <span id="resultCO2DailyPrefix">Daily CO₂ emissions:</span>
+                    <span id="resultCO2Daily" class="highlight highlight-co2"></span>
+                </div>
+            </div>
+
+            <div class="comparison-box">
+                <h3 id="comparisonTitle">📊 That's equivalent to…</h3>
+                <div class="comparison-item">
+                    <span class="comparison-icon">🚗</span>
+                    <span id="comparisonCarLabel">Driving a car:</span>
+                    <span id="comparisonCar" class="comparison-value"></span>
+                </div>
+                <div class="comparison-item">
+                    <span class="comparison-icon">🌳</span>
+                    <span id="comparisonTreeLabel">Trees needed to absorb this CO₂ for a year:</span>
+                    <span id="comparisonTrees" class="comparison-value"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="consumption-list">
+            <h3 id="overviewTitle">💸 Annual overview</h3>
+            <div id="yearlyList"></div>
+        </div>
+
+        <div class="info-box">
+            <strong id="tipTitle">Tip:</strong>
+            <span id="tipText">You can measure standby consumption with an <strong>energy meter</strong> (costs about €15). Plug the meter into the socket and the device into the meter to see the actual consumption.</span>
+        </div>
+
+        <div class="info-box">
+            <strong id="co2InfoTitle">🌍 About CO₂ emissions:</strong>
+            <span id="co2InfoText">CO₂ emissions depend on how electricity is generated in your region. Green energy from wind and solar has a much lower carbon footprint than electricity from coal or gas.</span>
+        </div>
+
+        <footer>
+            <span id="footerText">📴 Offline version — works without internet</span>
+        </footer>
+    </div>
+
+    <script>
+        // =================================================================
+        // TRANSLATIONS
+        // =================================================================
+        const translations = {
+            en: {
+                offlineLabel: "Works offline",
+                title: "🔄 Standby Power & CO₂ Calculator",
+                subtitle: "Calculate what your devices cost annually in standby mode, including CO₂ emissions.",
+                infoTitle: "💡 What is standby consumption?",
+                infoText: "This is the power consumption of devices that are off or in standby (such as a TV, NAS, server, router or charger), but still draw power.",
+                section1: "1. Choose an example or enter your own",
+                section2: "2. Your data",
+                labelName: "Device name:",
+                labelPower: "Standby consumption (Watt):",
+                labelRate: "Electricity price (€ per kWh):",
+                labelHours: "Number of hours per day in standby:",
+                labelEnergyMix: "Energy mix (for CO₂ calculation):",
+                hours24: "24 hours (always connected)",
+                hours12: "12 hours (e.g. off at night)",
+                hours8: "8 hours (workday)",
+                mixEU: "🇪🇺 EU average (250 g CO₂/kWh)",
+                mixGreen: "🌱 Green energy (100 g CO₂/kWh)",
+                mixBelgium: "🇧🇪 Belgium average (350 g CO₂/kWh)",
+                mixNetherlands: "🇳🇱 Netherlands (400 g CO₂/kWh)",
+                mixFrance: "🇫🇷 France (nuclear, 50 g CO₂/kWh)",
+                mixGermany: "🇩🇪 Germany (380 g CO₂/kWh)",
+                mixSpain: "🇪🇸 Spain (150 g CO₂/kWh)",
+                mixCoal: "⚫ Coal power (800 g CO₂/kWh)",
+                calcBtn: "Calculate Annual Cost",
+                resultTitlePrefix: "3. Result for:",
+                resultDailyPrefix: "The device consumes",
+                resultDailySuffix: "per day.",
+                resultYearlyPrefix: "This amounts to",
+                resultYearlySuffix: "per year.",
+                resultCostPrefix: "The annual cost is",
+                resultCO2YearlyPrefix: "🌍 Annual CO₂ emissions:",
+                resultCO2DailyPrefix: "Daily CO₂ emissions:",
+                comparisonTitle: "📊 That's equivalent to…",
+                comparisonCarLabel: "Driving a car:",
+                comparisonTreeLabel: "Trees needed to absorb this CO₂ for a year:",
+                overviewTitle: "💸 Annual overview",
+                tipTitle: "Tip:",
+                tipText: "You can measure standby consumption with an <strong>energy meter</strong> (costs about €15).",
+                co2InfoTitle: "🌍 About CO₂ emissions:",
+                co2InfoText: "CO₂ emissions depend on how electricity is generated in your region. Green energy from wind and solar has a much lower carbon footprint than electricity from coal or gas.",
+                errorPower: "Please enter a valid number (greater than 0).",
+                errorRate: "Please enter a valid number (greater than 0).",
+                placeholderName: "E.g. Home NAS",
+                placeholderPower: "E.g. 15",
+                placeholderRate: "E.g. 0.35",
+                defaultValueName: "Example device",
+                yearLabel: "After {n} year(s):",
+                carUnit: "km",
+                treeUnit: "tree(s)",
+                footerText: "📴 Offline version — works without internet",
+                examples: {
+                    nas: "NAS (always on)",
+                    server: "Home server",
+                    desktop: "Desktop PC (standby)",
+                    router: "Internet router",
+                    modem: "Cable modem",
+                    tv: "Modern TV + peripherals",
+                    console: "Game Console (standby)",
+                    pc: "Computer setup",
+                    quooker: "Quooker / Boiling water tap"
+                }
+            },
+            nl: {
+                offlineLabel: "Werkt offline",
+                title: "🔄 Sluipstroom & CO₂ Calculator",
+                subtitle: "Bereken wat je apparaten in standby kosten, inclusief CO₂-uitstoot.",
+                infoTitle: "💡 Wat is sluipverbruik?",
+                infoText: "Dit is het stroomverbruik van apparaten die uit of in standby staan (zoals een tv, NAS, server, router of oplader), maar nog wel stroom trekken.",
+                section1: "1. Kies een voorbeeld of voer zelf in",
+                section2: "2. Jouw gegevens",
+                labelName: "Naam van het apparaat:",
+                labelPower: "Sluipverbruik (Watt):",
+                labelRate: "Stroomprijs (€ per kWh):",
+                labelHours: "Aantal uren per dag in standby:",
+                labelEnergyMix: "Energiemix (voor CO₂-berekening):",
+                hours24: "24 uur (altijd aangesloten)",
+                hours12: "12 uur (bijv. 's nachts uit)",
+                hours8: "8 uur (werkdag)",
+                mixEU: "🇪🇺 EU-gemiddelde (250 g CO₂/kWh)",
+                mixGreen: "🌱 Groene stroom (100 g CO₂/kWh)",
+                mixBelgium: "🇧🇪 België (350 g CO₂/kWh)",
+                mixNetherlands: "🇳🇱 Nederland (400 g CO₂/kWh)",
+                mixFrance: "🇫🇷 Frankrijk (nucleair, 50 g CO₂/kWh)",
+                mixGermany: "🇩🇪 Duitsland (380 g CO₂/kWh)",
+                mixSpain: "🇪🇸 Spanje (150 g CO₂/kWh)",
+                mixCoal: "⚫ Kolenstroom (800 g CO₂/kWh)",
+                calcBtn: "Bereken Jaarkosten",
+                resultTitlePrefix: "3. Resultaat voor:",
+                resultDailyPrefix: "Het apparaat verbruikt",
+                resultDailySuffix: "per dag.",
+                resultYearlyPrefix: "Dit komt neer op",
+                resultYearlySuffix: "per jaar.",
+                resultCostPrefix: "De jaarlijkse kosten bedragen",
+                resultCO2YearlyPrefix: "🌍 Jaarlijkse CO₂-uitstoot:",
+                resultCO2DailyPrefix: "Dagelijkse CO₂-uitstoot:",
+                comparisonTitle: "📊 Dat staat gelijk aan…",
+                comparisonCarLabel: "Autorijden:",
+                comparisonTreeLabel: "Bomen nodig om deze CO₂ een jaar op te nemen:",
+                overviewTitle: "💸 Kostenoverzicht per jaar",
+                tipTitle: "Tip:",
+                tipText: "Je kunt het sluipverbruik meten met een <strong>energiemeter</strong> (kost ongeveer €15).",
+                co2InfoTitle: "🌍 Over CO₂-uitstoot:",
+                co2InfoText: "De CO₂-uitstoot hangt af van hoe elektriciteit in jouw regio wordt opgewekt. Groene stroom van wind en zon heeft een veel lagere CO₂-voetafdruk dan stroom van kolen of gas.",
+                errorPower: "Voer een geldig getal in (groter dan 0).",
+                errorRate: "Voer een geldig getal in (groter dan 0).",
+                placeholderName: "Bijv. Thuis NAS",
+                placeholderPower: "Bijv. 15",
+                placeholderRate: "Bijv. 0.35",
+                defaultValueName: "Voorbeeld apparaat",
+                yearLabel: "Na {n} jaar:",
+                carUnit: "km",
+                treeUnit: "boom(en)",
+                footerText: "📴 Offline versie — werkt zonder internet",
+                examples: {
+                    nas: "NAS (altijd aan)",
+                    server: "Thuis server",
+                    desktop: "Desktop PC (standby)",
+                    router: "Internet router",
+                    modem: "Kabelmodem",
+                    tv: "Moderne TV + randapparatuur",
+                    console: "Game Console (standby)",
+                    pc: "Computer setup",
+                    quooker: "Quooker / Kokendwaterkraan"
+                }
+            },
+            fr: {
+                offlineLabel: "Fonctionne hors ligne",
+                title: "🔄 Calculateur de veille & CO₂",
+                subtitle: "Calculez ce que vos appareils coûtent annuellement en veille, y compris les émissions de CO₂.",
+                infoTitle: "💡 Qu'est-ce que la consommation en veille ?",
+                infoText: "C'est la consommation d'énergie des appareils éteints ou en veille (comme une TV, un NAS, un serveur, un routeur ou un chargeur), mais qui consomment encore de l'électricité.",
+                section1: "1. Choisissez un exemple ou saisissez le vôtre",
+                section2: "2. Vos données",
+                labelName: "Nom de l'appareil :",
+                labelPower: "Consommation en veille (Watt) :",
+                labelRate: "Prix de l'électricité (€ par kWh) :",
+                labelHours: "Nombre d'heures par jour en veille :",
+                labelEnergyMix: "Mix énergétique (pour le calcul du CO₂) :",
+                hours24: "24 heures (toujours branché)",
+                hours12: "12 heures (ex. éteint la nuit)",
+                hours8: "8 heures (jour ouvré)",
+                mixEU: "🇪🇺 Moyenne UE (250 g CO₂/kWh)",
+                mixGreen: "🌱 Énergie verte (100 g CO₂/kWh)",
+                mixBelgium: "🇧🇪 Belgique (350 g CO₂/kWh)",
+                mixNetherlands: "🇳🇱 Pays-Bas (400 g CO₂/kWh)",
+                mixFrance: "🇫🇷 France (nucléaire, 50 g CO₂/kWh)",
+                mixGermany: "🇩🇪 Allemagne (380 g CO₂/kWh)",
+                mixSpain: "🇪🇸 Espagne (150 g CO₂/kWh)",
+                mixCoal: "⚫ Charbon (800 g CO₂/kWh)",
+                calcBtn: "Calculer le coût annuel",
+                resultTitlePrefix: "3. Résultat pour :",
+                resultDailyPrefix: "L'appareil consomme",
+                resultDailySuffix: "par jour.",
+                resultYearlyPrefix: "Cela représente",
+                resultYearlySuffix: "par an.",
+                resultCostPrefix: "Le coût annuel est de",
+                resultCO2YearlyPrefix: "🌍 Émissions annuelles de CO₂ :",
+                resultCO2DailyPrefix: "Émissions quotidiennes de CO₂ :",
+                comparisonTitle: "📊 Cela équivaut à…",
+                comparisonCarLabel: "Conduire une voiture :",
+                comparisonTreeLabel: "Arbres nécessaires pour absorber ce CO₂ pendant un an :",
+                overviewTitle: "💸 Aperçu annuel",
+                tipTitle: "Astuce :",
+                tipText: "Vous pouvez mesurer la consommation en veille avec un <strong>compteur d'énergie</strong> (environ 15 €).",
+                co2InfoTitle: "🌍 À propos des émissions de CO₂ :",
+                co2InfoText: "Les émissions de CO₂ dépendent de la façon dont l'électricité est produite dans votre région.",
+                errorPower: "Veuillez saisir un nombre valide (supérieur à 0).",
+                errorRate: "Veuillez saisir un nombre valide (supérieur à 0).",
+                placeholderName: "Ex. NAS domestique",
+                placeholderPower: "Ex. 15",
+                placeholderRate: "Ex. 0.35",
+                defaultValueName: "Appareil exemple",
+                yearLabel: "Après {n} an(s) :",
+                carUnit: "km",
+                treeUnit: "arbre(s)",
+                footerText: "📴 Version hors ligne — fonctionne sans internet",
+                examples: {
+                    nas: "NAS (toujours allumé)",
+                    server: "Serveur domestique",
+                    desktop: "PC de bureau (veille)",
+                    router: "Routeur Internet",
+                    modem: "Modem câble",
+                    tv: "TV moderne + périphériques",
+                    console: "Console de jeu (veille)",
+                    pc: "Configuration PC",
+                    quooker: "Quooker / Robinet d'eau bouillante"
+                }
+            },
+            de: {
+                offlineLabel: "Funktioniert offline",
+                title: "🔄 Standby-Verbrauch & CO₂-Rechner",
+                subtitle: "Berechnen Sie, was Ihre Geräte im Standby jährlich kosten, inklusive CO₂-Emissionen.",
+                infoTitle: "💡 Was ist Standby-Verbrauch?",
+                infoText: "Dies ist der Stromverbrauch von Geräten, die ausgeschaltet oder im Standby sind (wie TV, NAS, Server, Router oder Ladegerät), aber noch Strom ziehen.",
+                section1: "1. Wählen Sie ein Beispiel oder geben Sie Ihr eigenes ein",
+                section2: "2. Ihre Daten",
+                labelName: "Gerätename:",
+                labelPower: "Standby-Verbrauch (Watt):",
+                labelRate: "Strompreis (€ pro kWh):",
+                labelHours: "Anzahl der Stunden pro Tag im Standby:",
+                labelEnergyMix: "Energiemix (für CO₂-Berechnung):",
+                hours24: "24 Stunden (immer angeschlossen)",
+                hours12: "12 Stunden (z.B. nachts aus)",
+                hours8: "8 Stunden (Arbeitstag)",
+                mixEU: "🇪🇺 EU-Durchschnitt (250 g CO₂/kWh)",
+                mixGreen: "🌱 Ökostrom (100 g CO₂/kWh)",
+                mixBelgium: "🇧🇪 Belgien (350 g CO₂/kWh)",
+                mixNetherlands: "🇳🇱 Niederlande (400 g CO₂/kWh)",
+                mixFrance: "🇫🇷 Frankreich (Atomkraft, 50 g CO₂/kWh)",
+                mixGermany: "🇩🇪 Deutschland (380 g CO₂/kWh)",
+                mixSpain: "🇪🇸 Spanien (150 g CO₂/kWh)",
+                mixCoal: "⚫ Kohlestrom (800 g CO₂/kWh)",
+                calcBtn: "Jahreskosten berechnen",
+                resultTitlePrefix: "3. Ergebnis für:",
+                resultDailyPrefix: "Das Gerät verbraucht",
+                resultDailySuffix: "pro Tag.",
+                resultYearlyPrefix: "Das entspricht",
+                resultYearlySuffix: "pro Jahr.",
+                resultCostPrefix: "Die jährlichen Kosten betragen",
+                resultCO2YearlyPrefix: "🌍 Jährliche CO₂-Emissionen:",
+                resultCO2DailyPrefix: "Tägliche CO₂-Emissionen:",
+                comparisonTitle: "📊 Das entspricht…",
+                comparisonCarLabel: "Autofahren:",
+                comparisonTreeLabel: "Bäume, um dieses CO₂ ein Jahr lang zu absorbieren:",
+                overviewTitle: "💸 Jährliche Übersicht",
+                tipTitle: "Tipp:",
+                tipText: "Sie können den Standby-Verbrauch mit einem <strong>Energiemessgerät</strong> messen (ca. 15 €).",
+                co2InfoTitle: "🌍 Über CO₂-Emissionen:",
+                co2InfoText: "Die CO₂-Emissionen hängen davon ab, wie Strom in Ihrer Region erzeugt wird.",
+                errorPower: "Bitte geben Sie eine gültige Zahl ein (größer als 0).",
+                errorRate: "Bitte geben Sie eine gültige Zahl ein (größer als 0).",
+                placeholderName: "Z.B. Heim-NAS",
+                placeholderPower: "Z.B. 15",
+                placeholderRate: "Z.B. 0.35",
+                defaultValueName: "Beispielgerät",
+                yearLabel: "Nach {n} Jahr(en):",
+                carUnit: "km",
+                treeUnit: "Baum/Bäume",
+                footerText: "📴 Offline-Version — funktioniert ohne Internet",
+                examples: {
+                    nas: "NAS (immer an)",
+                    server: "Heimserver",
+                    desktop: "Desktop-PC (Standby)",
+                    router: "Internet-Router",
+                    modem: "Kabelmodem",
+                    tv: "Moderner TV + Zubehör",
+                    console: "Spielkonsole (Standby)",
+                    pc: "Computer-Setup",
+                    quooker: "Quooker / Kochwasserhahn"
+                }
+            },
+            es: {
+                offlineLabel: "Funciona sin conexión",
+                title: "🔄 Calculadora de consumo en espera & CO₂",
+                subtitle: "Calcula lo que tus dispositivos cuestan anualmente en modo de espera, incluidas las emisiones de CO₂.",
+                infoTitle: "💡 ¿Qué es el consumo en espera?",
+                infoText: "Es el consumo de energía de dispositivos apagados o en espera (como TV, NAS, servidor, router o cargador), pero que siguen consumiendo electricidad.",
+                section1: "1. Elige un ejemplo o introduce el tuyo",
+                section2: "2. Tus datos",
+                labelName: "Nombre del dispositivo:",
+                labelPower: "Consumo en espera (Vatios):",
+                labelRate: "Precio de la electricidad (€ por kWh):",
+                labelHours: "Número de horas al día en espera:",
+                labelEnergyMix: "Mix energético (para el cálculo de CO₂):",
+                hours24: "24 horas (siempre conectado)",
+                hours12: "12 horas (ej. apagado por la noche)",
+                hours8: "8 horas (día laboral)",
+                mixEU: "🇪🇺 Media UE (250 g CO₂/kWh)",
+                mixGreen: "🌱 Energía verde (100 g CO₂/kWh)",
+                mixBelgium: "🇧🇪 Bélgica (350 g CO₂/kWh)",
+                mixNetherlands: "🇳🇱 Países Bajos (400 g CO₂/kWh)",
+                mixFrance: "🇫🇷 Francia (nuclear, 50 g CO₂/kWh)",
+                mixGermany: "🇩🇪 Alemania (380 g CO₂/kWh)",
+                mixSpain: "🇪🇸 España (150 g CO₂/kWh)",
+                mixCoal: "⚫ Carbón (800 g CO₂/kWh)",
+                calcBtn: "Calcular coste anual",
+                resultTitlePrefix: "3. Resultado para:",
+                resultDailyPrefix: "El dispositivo consume",
+                resultDailySuffix: "por día.",
+                resultYearlyPrefix: "Esto equivale a",
+                resultYearlySuffix: "por año.",
+                resultCostPrefix: "El coste anual es",
+                resultCO2YearlyPrefix: "🌍 Emisiones anuales de CO₂:",
+                resultCO2DailyPrefix: "Emisiones diarias de CO₂:",
+                comparisonTitle: "📊 Eso equivale a…",
+                comparisonCarLabel: "Conducir un coche:",
+                comparisonTreeLabel: "Árboles necesarios para absorber este CO₂ durante un año:",
+                overviewTitle: "💸 Resumen anual",
+                tipTitle: "Consejo:",
+                tipText: "Puedes medir el consumo en espera con un <strong>medidor de energía</strong> (unos 15 €).",
+                co2InfoTitle: "🌍 Sobre las emisiones de CO₂:",
+                co2InfoText: "Las emisiones de CO₂ dependen de cómo se genera la electricidad en tu región.",
+                errorPower: "Introduce un número válido (mayor que 0).",
+                errorRate: "Introduce un número válido (mayor que 0).",
+                placeholderName: "Ej. NAS doméstico",
+                placeholderPower: "Ej. 15",
+                placeholderRate: "Ej. 0.35",
+                defaultValueName: "Dispositivo de ejemplo",
+                yearLabel: "Después de {n} año(s):",
+                carUnit: "km",
+                treeUnit: "árbol(es)",
+                footerText: "📴 Versión sin conexión — funciona sin internet",
+                examples: {
+                    nas: "NAS (siempre encendido)",
+                    server: "Servidor doméstico",
+                    desktop: "PC de escritorio (espera)",
+                    router: "Router de Internet",
+                    modem: "Módem de cable",
+                    tv: "TV moderna + periféricos",
+                    console: "Consola de juegos (espera)",
+                    pc: "Equipo de computadora",
+                    quooker: "Quooker / Grifo de agua hirviendo"
+                }
+            },
+            it: {
+                offlineLabel: "Funziona offline",
+                title: "🔄 Calcolatore standby & CO₂",
+                subtitle: "Calcola quanto costano annualmente i tuoi dispositivi in standby, incluse le emissioni di CO₂.",
+                infoTitle: "💡 Cos'è il consumo in standby?",
+                infoText: "È il consumo di energia di dispositivi spenti o in standby (come TV, NAS, server, router o caricabatterie), ma che assorbono ancora elettricità.",
+                section1: "1. Scegli un esempio o inserisci il tuo",
+                section2: "2. I tuoi dati",
+                labelName: "Nome del dispositivo:",
+                labelPower: "Consumo in standby (Watt):",
+                labelRate: "Prezzo dell'elettricità (€ per kWh):",
+                labelHours: "Numero di ore al giorno in standby:",
+                labelEnergyMix: "Mix energetico (per il calcolo della CO₂):",
+                hours24: "24 ore (sempre collegato)",
+                hours12: "12 ore (es. spento di notte)",
+                hours8: "8 ore (giorno lavorativo)",
+                mixEU: "🇪🇺 Media UE (250 g CO₂/kWh)",
+                mixGreen: "🌱 Energia verde (100 g CO₂/kWh)",
+                mixBelgium: "🇧🇪 Belgio (350 g CO₂/kWh)",
+                mixNetherlands: "🇳🇱 Paesi Bassi (400 g CO₂/kWh)",
+                mixFrance: "🇫🇷 Francia (nucleare, 50 g CO₂/kWh)",
+                mixGermany: "🇩🇪 Germania (380 g CO₂/kWh)",
+                mixSpain: "🇪🇸 Spagna (150 g CO₂/kWh)",
+                mixCoal: "⚫ Carbone (800 g CO₂/kWh)",
+                calcBtn: "Calcola costo annuale",
+                resultTitlePrefix: "3. Risultato per:",
+                resultDailyPrefix: "Il dispositivo consuma",
+                resultDailySuffix: "al giorno.",
+                resultYearlyPrefix: "Ciò equivale a",
+                resultYearlySuffix: "all'anno.",
+                resultCostPrefix: "Il costo annuale è",
+                resultCO2YearlyPrefix: "🌍 Emissioni annuali di CO₂:",
+                resultCO2DailyPrefix: "Emissioni giornaliere di CO₂:",
+                comparisonTitle: "📊 Equivale a…",
+                comparisonCarLabel: "Guidare un'auto:",
+                comparisonTreeLabel: "Alberi necessari per assorbire questa CO₂ per un anno:",
+                overviewTitle: "💸 Riepilogo annuale",
+                tipTitle: "Suggerimento:",
+                tipText: "Puoi misurare il consumo in standby con un <strong>misuratore di energia</strong> (circa 15 €).",
+                co2InfoTitle: "🌍 Informazioni sulle emissioni di CO₂:",
+                co2InfoText: "Le emissioni di CO₂ dipendono da come viene generata l'elettricità nella tua regione.",
+                errorPower: "Inserisci un numero valido (maggiore di 0).",
+                errorRate: "Inserisci un numero valido (maggiore di 0).",
+                placeholderName: "Es. NAS domestico",
+                placeholderPower: "Es. 15",
+                placeholderRate: "Es. 0.35",
+                defaultValueName: "Dispositivo di esempio",
+                yearLabel: "Dopo {n} anno/i:",
+                carUnit: "km",
+                treeUnit: "albero/i",
+                footerText: "📴 Versione offline — funziona senza internet",
+                examples: {
+                    nas: "NAS (sempre acceso)",
+                    server: "Server domestico",
+                    desktop: "PC desktop (standby)",
+                    router: "Router Internet",
+                    modem: "Modem via cavo",
+                    tv: "TV moderna + periferiche",
+                    console: "Console di gioco (standby)",
+                    pc: "Configurazione PC",
+                    quooker: "Quooker / Rubinetto acqua bollente"
+                }
+            },
+            pt: {
+                offlineLabel: "Funciona offline",
+                title: "🔄 Calculadora standby & CO₂",
+                subtitle: "Calcule quanto os seus dispositivos custam anualmente em standby, incluindo as emissões de CO₂.",
+                infoTitle: "💡 O que é o consumo em standby?",
+                infoText: "É o consumo de energia de dispositivos desligados ou em standby (como TV, NAS, servidor, router ou carregador), mas que ainda consomem eletricidade.",
+                section1: "1. Escolha um exemplo ou insira o seu",
+                section2: "2. Os seus dados",
+                labelName: "Nome do dispositivo:",
+                labelPower: "Consumo em standby (Watt):",
+                labelRate: "Preço da eletricidade (€ por kWh):",
+                labelHours: "Número de horas por dia em standby:",
+                labelEnergyMix: "Mix energético (para o cálculo de CO₂):",
+                hours24: "24 horas (sempre ligado)",
+                hours12: "12 horas (ex. desligado à noite)",
+                hours8: "8 horas (dia útil)",
+                mixEU: "🇪🇺 Média UE (250 g CO₂/kWh)",
+                mixGreen: "🌱 Energia verde (100 g CO₂/kWh)",
+                mixBelgium: "🇧🇪 Bélgica (350 g CO₂/kWh)",
+                mixNetherlands: "🇳🇱 Países Baixos (400 g CO₂/kWh)",
+                mixFrance: "🇫🇷 França (nuclear, 50 g CO₂/kWh)",
+                mixGermany: "🇩🇪 Alemanha (380 g CO₂/kWh)",
+                mixSpain: "🇪🇸 Espanha (150 g CO₂/kWh)",
+                mixCoal: "⚫ Carvão (800 g CO₂/kWh)",
+                calcBtn: "Calcular custo anual",
+                resultTitlePrefix: "3. Resultado para:",
+                resultDailyPrefix: "O dispositivo consome",
+                resultDailySuffix: "por dia.",
+                resultYearlyPrefix: "Isto equivale a",
+                resultYearlySuffix: "por ano.",
+                resultCostPrefix: "O custo anual é",
+                resultCO2YearlyPrefix: "🌍 Emissões anuais de CO₂:",
+                resultCO2DailyPrefix: "Emissões diárias de CO₂:",
+                comparisonTitle: "📊 Isso equivale a…",
+                comparisonCarLabel: "Conduzir um carro:",
+                comparisonTreeLabel: "Árvores necessárias para absorver este CO₂ durante um ano:",
+                overviewTitle: "💸 Resumo anual",
+                tipTitle: "Dica:",
+                tipText: "Pode medir o consumo em standby com um <strong>medidor de energia</strong> (cerca de 15 €).",
+                co2InfoTitle: "🌍 Sobre as emissões de CO₂:",
+                co2InfoText: "As emissões de CO₂ dependem de como a eletricidade é gerada na sua região.",
+                errorPower: "Insira um número válido (maior que 0).",
+                errorRate: "Insira um número válido (maior que 0).",
+                placeholderName: "Ex. NAS doméstico",
+                placeholderPower: "Ex. 15",
+                placeholderRate: "Ex. 0.35",
+                defaultValueName: "Dispositivo de exemplo",
+                yearLabel: "Após {n} ano(s):",
+                carUnit: "km",
+                treeUnit: "árvore(s)",
+                footerText: "📴 Versão offline — funciona sem internet",
+                examples: {
+                    nas: "NAS (sempre ligado)",
+                    server: "Servidor doméstico",
+                    desktop: "PC desktop (standby)",
+                    router: "Router de Internet",
+                    modem: "Modem de cabo",
+                    tv: "TV moderna + periféricos",
+                    console: "Consola de jogos (standby)",
+                    pc: "Configuração de PC",
+                    quooker: "Quooker / Torneira de água a ferver"
+                }
+            },
+            la: {
+                offlineLabel: "Sine interrete laborat",
+                title: "🔄 Computator Standby & CO₂",
+                subtitle: "Computa quantum apparatus tua in standby constant, inclusis emissionibus CO₂.",
+                infoTitle: "💡 Quid est consumptio standby?",
+                infoText: "Hic est consumptio energiae apparatuum qui exstincti vel in standby sunt (ut TV, NAS, server, router aut patina), sed adhuc electricitatem trahunt.",
+                section1: "1. Elige exemplum aut tuum insere",
+                section2: "2. Tua data",
+                labelName: "Nomen apparatus:",
+                labelPower: "Consumptio standby (Watt):",
+                labelRate: "Pretium electricitatis (€ per kWh):",
+                labelHours: "Numerus horarum per diem in standby:",
+                labelEnergyMix: "Mixtura energetica (ad computationem CO₂):",
+                hours24: "24 horae (semper connexus)",
+                hours12: "12 horae (ex. nocte exstinctus)",
+                hours8: "8 horae (dies laboris)",
+                mixEU: "🇪🇺 Media UE (250 g CO₂/kWh)",
+                mixGreen: "🌱 Energia viridis (100 g CO₂/kWh)",
+                mixBelgium: "🇧🇪 Belgica (350 g CO₂/kWh)",
+                mixNetherlands: "🇳🇱 Nederlandia (400 g CO₂/kWh)",
+                mixFrance: "🇫🇷 Francia (nuclearis, 50 g CO₂/kWh)",
+                mixGermany: "🇩🇪 Germania (380 g CO₂/kWh)",
+                mixSpain: "🇪🇸 Hispania (150 g CO₂/kWh)",
+                mixCoal: "⚫ Carbo (800 g CO₂/kWh)",
+                calcBtn: "Computa Sumptum Annuum",
+                resultTitlePrefix: "3. Eventus pro:",
+                resultDailyPrefix: "Apparatus consumit",
+                resultDailySuffix: "per diem.",
+                resultYearlyPrefix: "Hoc aequat",
+                resultYearlySuffix: "per annum.",
+                resultCostPrefix: "Sumptus annuus est",
+                resultCO2YearlyPrefix: "🌍 Emissiones annuae CO₂:",
+                resultCO2DailyPrefix: "Emissiones cotidianae CO₂:",
+                comparisonTitle: "📊 Hoc aequat…",
+                comparisonCarLabel: "Autocinetum gubernare:",
+                comparisonTreeLabel: "Arbores necessariae ad hanc CO₂ per annum absorbendam:",
+                overviewTitle: "💸 Summarium annuum",
+                tipTitle: "Consilium:",
+                tipText: "Potes metiri consumptionem standby cum <strong>mensore energiae</strong> (circa €15).",
+                co2InfoTitle: "🌍 De emissionibus CO₂:",
+                co2InfoText: "Emissiones CO₂ pendent ex modo quo electricitas in regione tua generatur.",
+                errorPower: "Insere numerum validum (maior quam 0).",
+                errorRate: "Insere numerum validum (maior quam 0).",
+                placeholderName: "Ex. NAS domesticus",
+                placeholderPower: "Ex. 15",
+                placeholderRate: "Ex. 0.35",
+                defaultValueName: "Apparatus exempli",
+                yearLabel: "Post {n} annum/annos:",
+                carUnit: "km",
+                treeUnit: "arbor(es)",
+                footerText: "📴 Versio offline — sine interrete laborat",
+                examples: {
+                    nas: "NAS (semper accensus)",
+                    server: "Servus domesticus",
+                    desktop: "Computatrum desktop (standby)",
+                    router: "Router interretis",
+                    modem: "Modem funis",
+                    tv: "TV moderna + peripherica",
+                    console: "Consola lusoria (standby)",
+                    pc: "Computatrum constitutum",
+                    quooker: "Quooker / Fons aquae ferventis"
+                }
+            }
+        };
+
+        // =================================================================
+        // EXAMPLE VALUES
+        // =================================================================
+        const exampleValues = {
+            nas:      { power: 15, rate: 0.35 },
+            server:   { power: 25, rate: 0.35 },
+            desktop:  { power: 5,  rate: 0.35 },
+            router:   { power: 8,  rate: 0.35 },
+            modem:    { power: 6,  rate: 0.35 },
+            tv:       { power: 25, rate: 0.35 },
+            console:  { power: 10, rate: 0.35 },
+            pc:       { power: 15, rate: 0.35 },
+            quooker:  { power: 10, rate: 0.35 }
+        };
+
+        const CO2_CONSTANTS = {
+            CAR_GRAMS_PER_KM: 120,
+            TREE_KG_PER_YEAR: 21
+        };
+
+        let currentLang = 'en';
+
+        // =================================================================
+        // LANGUAGE SWITCH
+        // =================================================================
+        function switchLang(lang) {
+            currentLang = lang;
+            const t = translations[lang];
+            document.documentElement.lang = lang;
+
+            const set = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = val;
+            };
+            const setHTML = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = val;
+            };
+
+            set('offlineLabel', t.offlineLabel);
+            set('title', t.title);
+            set('subtitle', t.subtitle);
+            set('infoTitle', t.infoTitle);
+            setHTML('infoText', t.infoText);
+            set('section1', t.section1);
+            set('section2', t.section2);
+            set('labelName', t.labelName);
+            set('labelPower', t.labelPower);
+            set('labelRate', t.labelRate);
+            set('labelHours', t.labelHours);
+            set('labelEnergyMix', t.labelEnergyMix);
+            set('hours24', t.hours24);
+            set('hours12', t.hours12);
+            set('hours8', t.hours8);
+            set('mixEU', t.mixEU);
+            set('mixGreen', t.mixGreen);
+            set('mixBelgium', t.mixBelgium);
+            set('mixNetherlands', t.mixNetherlands);
+            set('mixFrance', t.mixFrance);
+            set('mixGermany', t.mixGermany);
+            set('mixSpain', t.mixSpain);
+            set('mixCoal', t.mixCoal);
+            set('calcBtn', t.calcBtn);
+            set('resultTitlePrefix', t.resultTitlePrefix);
+            set('resultDailyPrefix', t.resultDailyPrefix);
+            set('resultDailySuffix', t.resultDailySuffix);
+            set('resultYearlyPrefix', t.resultYearlyPrefix);
+            set('resultYearlySuffix', t.resultYearlySuffix);
+            set('resultCostPrefix', t.resultCostPrefix);
+            set('resultCO2YearlyPrefix', t.resultCO2YearlyPrefix);
+            set('resultCO2DailyPrefix', t.resultCO2DailyPrefix);
+            set('comparisonTitle', t.comparisonTitle);
+            set('comparisonCarLabel', t.comparisonCarLabel);
+            set('comparisonTreeLabel', t.comparisonTreeLabel);
+            set('overviewTitle', t.overviewTitle);
+            set('tipTitle', t.tipTitle);
+            setHTML('tipText', t.tipText);
+            set('co2InfoTitle', t.co2InfoTitle);
+            set('co2InfoText', t.co2InfoText);
+            set('powerError', t.errorPower);
+            set('rateError', t.errorRate);
+            document.getElementById('deviceName').placeholder = t.placeholderName;
+            document.getElementById('power').placeholder = t.placeholderPower;
+            document.getElementById('rate').placeholder = t.placeholderRate;
+
+            document.getElementById('exNas').innerHTML = '🗄️ ' + t.examples.nas + '<span class="device-watt">15 W</span>';
+            document.getElementById('exServer').innerHTML = '🖥️ ' + t.examples.server + '<span class="device-watt">25 W</span>';
+            document.getElementById('exDesktop').innerHTML = '💻 ' + t.examples.desktop + '<span class="device-watt">5 W</span>';
+            document.getElementById('exRouter').innerHTML = '📡 ' + t.examples.router + '<span class="device-watt">8 W</span>';
+            document.getElementById('exModem').innerHTML = '📶 ' + t.examples.modem + '<span class="device-watt">6 W</span>';
+            document.getElementById('exTv').innerHTML = '📺 ' + t.examples.tv + '<span class="device-watt">25 W</span>';
+            document.getElementById('exConsole').innerHTML = '🎮 ' + t.examples.console + '<span class="device-watt">10 W</span>';
+            document.getElementById('exPc').innerHTML = '🖱️ ' + t.examples.pc + '<span class="device-watt">15 W</span>';
+            document.getElementById('exQuooker').innerHTML = '🚰 ' + t.examples.quooker + '<span class="device-watt">10 W</span>';
+
+            set('footerText', t.footerText);
+            document.title = t.title.replace(/🔄\s*/, '') + ' (Offline)';
+            calculateStandbyCost();
+        }
+
+        // =================================================================
+        // FILL EXAMPLE
+        // =================================================================
+        function fillExample(type) {
+            const t = translations[currentLang];
+            const ex = exampleValues[type];
+            document.getElementById('deviceName').value = t.examples[type];
+            document.getElementById('power').value = ex.power;
+            document.getElementById('rate').value = ex.rate;
+            document.getElementById('hours').value = 24;
+            document.getElementById('powerError').style.display = 'none';
+            document.getElementById('rateError').style.display = 'none';
+            calculateStandbyCost();
+        }
+
+        // =================================================================
+        // MAIN CALCULATION
+        // =================================================================
+        function calculateStandbyCost() {
+            const t = translations[currentLang];
+            const deviceName = document.getElementById('deviceName').value.trim() || t.defaultValueName;
+            const powerWatts = parseFloat(document.getElementById('power').value);
+            const ratePerKWh = parseFloat(document.getElementById('rate').value);
+            const hoursPerDay = parseInt(document.getElementById('hours').value);
+            const co2GramsPerKWh = parseFloat(document.getElementById('energyMix').value);
+
+            let isValid = true;
+            if (isNaN(powerWatts) || powerWatts <= 0) {
+                document.getElementById('powerError').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('powerError').style.display = 'none';
+            }
+            if (isNaN(ratePerKWh) || ratePerKWh <= 0) {
+                document.getElementById('rateError').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('rateError').style.display = 'none';
+            }
+
+            if (!isValid) {
+                document.getElementById('resultBox').style.display = 'none';
+                document.getElementById('yearlyList').innerHTML = '';
+                return;
+            }
+
+            const powerKW = powerWatts / 1000;
+            const dailyKWh = powerKW * hoursPerDay;
+            const yearlyKWh = dailyKWh * 365;
+            const yearlyCost = yearlyKWh * ratePerKWh;
+
+            const dailyCO2Kg = (dailyKWh * co2GramsPerKWh) / 1000;
+            const yearlyCO2Kg = (yearlyKWh * co2GramsPerKWh) / 1000;
+
+            document.getElementById('resultDeviceName').textContent = deviceName;
+            document.getElementById('resultDaily').textContent = dailyKWh.toFixed(3) + ' kWh';
+            document.getElementById('resultYearly').textContent = yearlyKWh.toFixed(2) + ' kWh';
+            document.getElementById('resultCost').textContent = '€' + yearlyCost.toFixed(2);
+            document.getElementById('resultCO2Yearly').textContent = yearlyCO2Kg.toFixed(2) + ' kg CO₂';
+            document.getElementById('resultCO2Daily').textContent = dailyCO2Kg.toFixed(3) + ' kg CO₂';
+
+            const yearlyCO2Grams = yearlyCO2Kg * 1000;
+            const kmDriven = Math.round(yearlyCO2Grams / CO2_CONSTANTS.CAR_GRAMS_PER_KM);
+            document.getElementById('comparisonCar').textContent =
+                kmDriven.toLocaleString() + ' ' + t.carUnit;
+
+            const trees = yearlyCO2Kg / CO2_CONSTANTS.TREE_KG_PER_YEAR;
+            document.getElementById('comparisonTrees').textContent =
+                trees.toFixed(1) + ' ' + t.treeUnit;
+
+            document.getElementById('resultBox').style.display = 'block';
+            showYearlyBreakdown(yearlyCost, yearlyCO2Kg);
+        }
+
+        // =================================================================
+        // YEARLY BREAKDOWN
+        // =================================================================
+        function showYearlyBreakdown(yearlyCost, yearlyCO2Kg) {
+            const t = translations[currentLang];
+            const listContainer = document.getElementById('yearlyList');
+            listContainer.innerHTML = '';
+
+            for (let year = 1; year <= 5; year++) {
+                const totalCost = yearlyCost * year;
+                const totalCO2 = yearlyCO2Kg * year;
+                const listItem = document.createElement('div');
+                listItem.className = 'list-item';
+                const label = t.yearLabel.replace('{n}', year);
+                listItem.innerHTML = `
+                    <span class="list-period">${label}</span>
+                    <span class="list-cost">€${totalCost.toFixed(2)}</span>
+                    <span class="list-co2">${totalCO2.toFixed(1)} kg CO₂</span>
+                `;
+                listContainer.appendChild(listItem);
+            }
+        }
+
+        // =================================================================
+        // INIT
+        // =================================================================
+        window.onload = function () {
+            document.getElementById('langSelect').value = 'en';
+            switchLang('en');
+        };
+    </script>
+</body>
+</html>
