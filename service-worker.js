@@ -6,17 +6,27 @@
 
 const CACHE_NAME = 'standby-co2-v1.0.0';
 
-/* Bestanden die vooraf gecached worden (app-shell).
-   Alle paden zijn relatief t.o.v. de scope van de SW. */
+/* ---------------------------------------------------------
+   App-shell: alle bestanden die offline beschikbaar moeten zijn
+   --------------------------------------------------------- */
 const APP_SHELL = [
   './',
   './index.html',
   './offline.html',
   './privacy.html',
   './manifest.json',
+  './icons/favicon.svg',
+  './icons/icon-72.png',
+  './icons/icon-96.png',
+  './icons/icon-128.png',
+  './icons/icon-144.png',
+  './icons/icon-152.png',
   './icons/icon-192.png',
+  './icons/icon-300.png',
+  './icons/icon-384.png',
   './icons/icon-512.png',
-  './icons/icon-maskable-512.png'
+  './icons/icon-192-maskable.png',
+  './icons/icon-512-maskable.png'
 ];
 
 /* ---------------- INSTALLATIE ---------------- */
@@ -26,7 +36,6 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         return cache.addAll(APP_SHELL).catch((err) => {
-          // Als één bestand ontbreekt, ga door met de rest
           console.warn('[SW] Sommige bestanden konden niet worden gecached:', err);
         });
       })
@@ -55,8 +64,8 @@ self.addEventListener('activate', (event) => {
 
 /* ---------------- FETCH ---------------- */
 /* Strategie:
-   - Voor navigatie (HTML-pagina's): network-first, fallback naar cache
-   - Voor statische assets (CSS, JS, images): cache-first, dan netwerk
+   - Navigatie (HTML): network-first → fallback naar cache
+   - Assets (CSS, JS, images): cache-first → fallback naar netwerk
 */
 self.addEventListener('fetch', (event) => {
   const request = event.request;
@@ -68,12 +77,11 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  // Navigatieverzoeken (HTML-pagina's): network-first
+  // ---- Navigatie: network-first ----
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          // Kopieer de response naar de cache
           const responseClone = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(request, responseClone);
@@ -81,7 +89,6 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => {
-          // Offline: probeer de specifieke pagina uit de cache
           return caches.match(request).then((cached) => {
             return cached || caches.match('./index.html');
           });
@@ -90,16 +97,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Overige assets: cache-first
+  // ---- Overige assets: cache-first ----
   event.respondWith(
     caches.match(request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
+      if (cachedResponse) return cachedResponse;
 
       return fetch(request)
         .then((networkResponse) => {
-          // Alleen geldige responses cachen
           if (
             !networkResponse ||
             networkResponse.status !== 200 ||
@@ -116,7 +120,6 @@ self.addEventListener('fetch', (event) => {
           return networkResponse;
         })
         .catch(() => {
-          // Fallback voor afbeeldingen: niks
           console.warn('[SW] Fetch mislukt voor:', request.url);
         });
     })
@@ -124,7 +127,7 @@ self.addEventListener('fetch', (event) => {
 });
 
 /* ---------------- BERICHTEN ---------------- */
-/* Sta toe dat de pagina de SW vraagt om direct te updaten. */
+/* Sta toe dat de pagina de SW vraagt om direct te updaten */
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
